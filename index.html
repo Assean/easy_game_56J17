@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>數字挑戰</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            text-align: center;
+            padding: 20px;
+            background: #222;
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        h1 { margin-bottom: 20px; color: #00e5ff; }
+
+        #game-board {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 15px;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .num-btn {
+            width: 70px; height: 70px;
+            background: #333; border: 2px solid #00e5ff;
+            color: #fff; font-size: 24px; font-weight: bold;
+            cursor: pointer; border-radius: 50%;
+            transition: all 0.2s; box-shadow: 0 0 10px rgba(0, 229, 255, 0.3);
+            display: flex; align-items: center; justify-content: center;
+        }
+
+        .num-btn:hover { background: #00e5ff; color: #000; transform: scale(1.1); }
+        .num-btn.clicked { visibility: hidden; pointer-events: none; }
+        .status { margin-top: 20px; font-size: 1.2rem; color: #aaa; }
+    </style>
+</head>
+
+<body>
+    <h1>數字挑戰</h1>
+    <p>請依序點擊數字 <span id="next-num" style="color: #d500f9; font-weight:bold; font-size:1.5em;">1</span></p>
+
+    <div id="game-board"></div>
+    <div class="status" id="timer">時間: 0s</div>
+
+    <script>
+        const totalNums = 20;
+        let currentNum = 1;
+        let startTime = Date.now();
+        let timerInterval;
+
+        // 初始化遊戲
+        function initGame() {
+            const board = document.getElementById('game-board');
+            let nums = Array.from({ length: totalNums }, (_, i) => i + 1).sort(() => Math.random() - 0.5);
+
+            nums.forEach(n => {
+                let btn = document.createElement('div');
+                btn.className = 'num-btn';
+                btn.textContent = n;
+                btn.onclick = () => checkNum(btn, n);
+                board.appendChild(btn);
+            });
+
+            timerInterval = setInterval(() => {
+                let elapsed = Math.floor((Date.now() - startTime) / 1000);
+                document.getElementById('timer').textContent = `時間: ${elapsed}s`;
+            }, 1000);
+        }
+
+        // 檢查點擊數字是否正確
+        function checkNum(btn, n) {
+            if (n === currentNum) {
+                btn.classList.add('clicked');
+                currentNum++;
+                if (currentNum > totalNums) {
+                    endGame();
+                } else {
+                    document.getElementById('next-num').textContent = currentNum;
+                }
+            } else {
+                btn.style.borderColor = 'red';
+                setTimeout(() => btn.style.borderColor = '#00e5ff', 300);
+            }
+        }
+
+        // 自打
+        function send(result,time,user) {
+            if (window.opener) {
+                window.opener.receiveGameResult({
+                    game: document.title,
+                    data: { result: result,
+                            time: time},
+                    user: user
+                });
+            }
+        }
+        
+        // 原有
+        function endGame() {
+            clearInterval(timerInterval);
+            let timeUsed = Math.floor((Date.now() - startTime) / 1000);
+
+            // 自行打出(start)
+            const user = prompt(`恭喜完成！耗時 ${timeUsed} 秒。請輸入您的姓名以儲存成績：`);
+            if(user){
+                send("完成", timeUsed, user);
+                if (confirm("成績已傳送！要再挑戰一次嗎？(選擇取消會導向遊戲列表)")) {
+                    location.reload(); 
+                } else {
+                    window.close();    
+                }
+            }
+            
+        }
+        //end
+
+        //原有
+        initGame();
+    </script>
+</body>
+</html>
